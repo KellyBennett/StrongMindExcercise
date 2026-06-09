@@ -15,8 +15,6 @@ http_interactions:
       - strong-mind-challenge
       Host:
       - api.github.com
-      If-None-Match:
-      - W/"example-etag"
   response:
     status:
       code: 200
@@ -69,9 +67,9 @@ http_interactions:
       X-Ratelimit-Limit:
       - '60'
       X-Ratelimit-Remaining:
-      - '57'
+      - '58'
       X-Ratelimit-Used:
-      - '3'
+      - '2'
       X-Ratelimit-Resource:
       - core
       X-Ratelimit-Reset:
@@ -79,7 +77,7 @@ http_interactions:
       Content-Length:
       - '71876'
       X-Github-Request-Id:
-      - C79B:44B52:B75856:2B69788:6A27BA4D
+      - C79A:1A155D:B1BE0E:2A1B219:6A27BA4C
     body:
       encoding: ASCII-8BIT
       string: !binary |-
