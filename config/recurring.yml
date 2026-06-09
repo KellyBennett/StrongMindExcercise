@@ -1,0 +1,10 @@
+default: &default
+  github_push_event_job:
+    class: IngestGithubEventsJob
+    schedule: every second
+
+development:
+  <<: *default
+
+production:
+  <<: *default
