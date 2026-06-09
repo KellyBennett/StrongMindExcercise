@@ -104,7 +104,7 @@ With the web service running in another terminal, open a Rails console:
 docker compose exec web bash -lc "mise exec -- bin/rails console"
 ```
 
-Then check you can run rails commands, such as:
+Then you can run rails commands, such as:
 
 ```ruby
 GithubIngestionCursor.public_events
@@ -129,7 +129,7 @@ able to fetch those resources.
 
 ## Optional Dev Container
 
-For day-to-day development, open the repository in VS Code and choose
+For day-to-day development, you would open the repository in VS Code and choose
 `Dev Containers: Reopen in Container`.
 
 The dev container keeps local requirements minimal while providing the app
