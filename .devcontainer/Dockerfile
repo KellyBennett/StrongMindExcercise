@@ -5,3 +5,7 @@ FROM ghcr.io/rails/devcontainer/images/ruby:$RUBY_VERSION
 # Ensure binding is always 0.0.0.0
 # Binds the server to all IP addresses of the container, so it can be accessed from outside the container.
 ENV BINDING="0.0.0.0"
+
+USER root
+RUN mkdir -p /home/vscode/.bundle && chown -R vscode:vscode /home/vscode/.bundle
+USER vscode

@@ -1,6 +1,8 @@
 x-app-env: &app-env
+  BUNDLE_PATH: /home/vscode/.bundle
   DB_HOST: postgres
   JOB_CONCURRENCY: ${JOB_CONCURRENCY:-1}
+  RAILS_LOG_TO_STDOUT: ${RAILS_LOG_TO_STDOUT:-true}
 
 x-app: &app
   build:
@@ -13,7 +15,7 @@ x-app: &app
       condition: service_healthy
   volumes:
     - .:/rails:cached
-    - bundle-data:/usr/local/bundle
+    - bundle-data:/home/vscode/.bundle
   working_dir: /rails
 
 services:
@@ -36,7 +38,7 @@ services:
     environment:
       <<: *app-env
       RAILS_ENV: test
-    command: bash -lc "mise exec -- bundle install && mise exec -- bin/rails db:prepare && mise exec -- rspec"
+    command: bash -lc "mise exec -- bundle install && mise exec -- bin/rails db:prepare && mise exec -- bundle exec rspec"
 
   postgres:
     image: postgres:16.1

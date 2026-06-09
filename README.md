@@ -30,7 +30,7 @@ Then open:
 - `http://localhost:3000/jobs` for Mission Control Jobs
 - `http://localhost:3000/up` for the Rails health check
 
-Run one ingestion pass manually:
+Run one cursor-aware ingestion pass manually:
 
 ```bash
 docker compose run --rm ingest
@@ -50,7 +50,7 @@ Start the web app and database:
 docker compose up --build web
 ```
 
-In another terminal, run one ingestion pass:
+In another terminal, run one cursor-aware ingestion pass:
 
 ```bash
 docker compose run --rm ingest
@@ -58,8 +58,11 @@ docker compose run --rm ingest
 
 After the container is created and the dependencies are installed, the
 ingestion command should finish within a minute in a normal network
-environment. If GitHub returns new public `PushEvent` records, database rows
-should appear immediately after that command completes. Enrichment jobs may take
+environment. The command respects the stored GitHub polling cursor, so it may
+log that ingestion was skipped when GitHub has asked the app to wait or when the
+unauthenticated API rate limit is still resetting. If GitHub polling is
+available and returns new public `PushEvent` records, database rows should
+appear immediately after that command completes. Enrichment jobs may take
 another few seconds to populate actor and repository metadata because that work
 runs in the background queue.
 
