@@ -6,7 +6,7 @@ FactoryBot.define do
     sequence(:push_identifier) { |n| 200_000 + n }
     ref { "refs/heads/main" }
     head { "HEAD_SHA" }
-    before { "BEFORE_SHA" }
+    add_attribute(:before) { "BEFORE_SHA" }
     actor_id { 300_000 }
     actor_login { "contributor" }
     raw_payload do

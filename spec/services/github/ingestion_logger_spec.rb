@@ -10,20 +10,22 @@ RSpec.describe Github::IngestionLogger do
   end
 
   it "logs when polling is paused until GitHub's requested poll window" do
-    cursor = build(:github_ingestion_cursor, next_poll_at: Time.zone.parse("2026-06-09 12:00:00 UTC"))
+    next_poll_at = 1.hour.from_now
+    cursor = build(:github_ingestion_cursor, next_poll_at:)
 
     expect(rails_logger).to receive(:info).with(
-      "Skipping GitHub events ingestion; next poll at 2026-06-09T12:00:00Z"
+      "Skipping GitHub events ingestion; next poll at #{next_poll_at.iso8601}"
     )
 
     ingestion_logger.polling_skipped(cursor)
   end
 
   it "logs when polling is paused until the rate limit reset" do
-    cursor = build(:github_ingestion_cursor, rate_limit_resets_at: Time.zone.parse("2026-06-09 12:30:00 UTC"))
+    rate_limit_resets_at = 30.minutes.from_now
+    cursor = build(:github_ingestion_cursor, rate_limit_remaining: 0, rate_limit_resets_at:)
 
     expect(rails_logger).to receive(:info).with(
-      "Skipping GitHub events ingestion; rate limit resets at 2026-06-09T12:30:00Z"
+      "Skipping GitHub events ingestion; rate limit resets at #{rate_limit_resets_at.iso8601}"
     )
 
     ingestion_logger.polling_skipped(cursor)

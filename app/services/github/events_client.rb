@@ -3,7 +3,7 @@ require "net/http"
 
 module Github
   class EventsClient
-    DEFAULT_REPOSITORY = "rails/rails"
+    EVENTS_URL = "https://api.github.com/events"
     DEFAULT_POLL_INTERVAL = 60
 
     Response = Data.define(
@@ -47,20 +47,7 @@ module Github
     private
 
     def events_uri
-      owner, name = configured_repository.split("/")
-
-      URI("https://api.github.com/repos/#{escape_path(owner)}/#{escape_path(name)}/events")
-    end
-
-    def configured_repository
-      repository = ENV.fetch("GITHUB_REPOSITORY", DEFAULT_REPOSITORY).strip
-      return repository if repository.match?(%r{\A[\w.-]+/[\w.-]+\z})
-
-      raise ArgumentError, "GITHUB_REPOSITORY must be formatted as owner/name"
-    end
-
-    def escape_path(value)
-      URI.encode_www_form_component(value)
+      URI(EVENTS_URL)
     end
 
     def request_for(uri, etag)

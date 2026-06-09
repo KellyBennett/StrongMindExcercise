@@ -3,15 +3,7 @@ require "rails_helper"
 RSpec.describe Github::EventsClient, :vcr do
   subject(:client) { described_class.new }
 
-  around do |example|
-    original_repository = ENV["GITHUB_REPOSITORY"]
-    ENV["GITHUB_REPOSITORY"] = "rails/rails"
-    example.run
-  ensure
-    ENV["GITHUB_REPOSITORY"] = original_repository
-  end
-
-  it "fetches public repository events without authentication and parses response metadata" do
+  it "fetches public events without authentication and parses response metadata" do
     response = client.fetch_events(etag: nil)
 
     expect(response.status).to eq(200)
@@ -28,15 +20,8 @@ RSpec.describe Github::EventsClient, :vcr do
     client.fetch_events(etag:)
 
     expect(
-      a_request(:get, "https://api.github.com/repos/rails/rails/events")
+      a_request(:get, "https://api.github.com/events")
         .with(headers: { "If-None-Match" => etag })
     ).to have_been_made
-  end
-
-  it "rejects malformed repository configuration" do
-    ENV["GITHUB_REPOSITORY"] = "rails"
-
-    expect { client.fetch_events(etag: nil) }
-      .to raise_error(ArgumentError, "GITHUB_REPOSITORY must be formatted as owner/name")
   end
 end
