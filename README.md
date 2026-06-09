@@ -9,8 +9,7 @@ metadata in background jobs.
 - Docker and Docker Compose
 
 Ruby 3.4.9, PostgreSQL, and the application dependencies are provided by the
-Docker image and compose services. Reviewers do not need Ruby or PostgreSQL
-installed on their host machine.
+Docker image and compose services.
 
 The project was built in a VS Code dev container, but the root
 `docker-compose.yml` is the recommended way to run it for review without
@@ -43,9 +42,87 @@ Run the test suite:
 docker compose run --rm test
 ```
 
-The compose services use `mise exec -- ...` because the dev container image
-installs the Ruby toolchain through mise. `mise exec` runs the command with the
-Ruby version and related tools selected by the project.
+## How To Verify It's Working
+
+Start the web app and database:
+
+```bash
+docker compose up --build web
+```
+
+In another terminal, run one ingestion pass:
+
+```bash
+docker compose run --rm ingest
+```
+
+After the container is created and the dependencies are installed, the
+ingestion command should finish within a minute in a normal network
+environment. If GitHub returns new public `PushEvent` records, database rows
+should appear immediately after that command completes. Enrichment jobs may take
+another few seconds to populate actor and repository metadata because that work
+runs in the background queue.
+
+### Verifying via UI
+
+Open
+
+- `http://localhost:3000/admin/github_push_events` for stored `PushEvent`
+  records
+- `http://localhost:3000/admin/github_actors` for enriched actor records
+- `http://localhost:3000/admin/github_repositories` for enriched repository
+  records
+- `http://localhost:3000/jobs` for queued or failed background jobs
+
+### Verifying via Logs
+
+Expected ingestion logs include messages like:
+
+- `Starting GitHub events ingestion; etag missing`
+- `Fetched N GitHub events`
+- `Imported N GitHub PushEvent records; skipped N`
+
+Depending on GitHub's API state, you may also see:
+
+- `GitHub events unchanged; no ingestion work needed`
+- `Skipping GitHub events ingestion; next poll at ...`
+- `GitHub events ingestion rate limited; backing off`
+
+Expected enrichment logs include:
+
+- `Starting GitHub PushEvent enrichment for ...`
+- `Finished GitHub PushEvent enrichment for ...`
+
+### Verifying Records From The Database
+
+With the web service running in another terminal, open a Rails console:
+
+```bash
+docker compose exec web bash -lc "mise exec -- bin/rails console"
+```
+
+Then check you can run rails commands, such as:
+
+```ruby
+GithubIngestionCursor.public_events
+
+GithubPushEvent.count
+
+GithubPushEvent.order(created_at: :desc).limit(5).pluck(:github_event_id, :repository_name, :push_identifier)
+
+GithubActor.count
+
+GithubRepository.count
+
+ActiveStorage::Attachment.where(name: "raw_event_payload", record_type: "GithubPushEvent").count
+```
+
+The most important table is `github_push_events`; it contains the raw GitHub
+payload plus the required queryable fields: `github_repository_id`,
+`push_identifier`, `ref`, `head`, and `before`. `github_ingestion_cursors`
+stores the latest ETag, next poll time, and rate-limit state. Enrichment data
+appears in `github_actors` and `github_repositories` when the background job is
+able to fetch those resources.
 
 ## Optional Dev Container
 

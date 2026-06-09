@@ -1,8 +1,5 @@
-require "json"
-require "net/http"
-
 module Github
-  class ResourceClient
+  class ResourceClient < ApiClient
     Response = Data.define(
       :status,
       :payload,
@@ -20,43 +17,14 @@ module Github
 
     def fetch(url:)
       uri = ApiUrl.parse(url)
-
-      http_response = Net::HTTP.start(uri.host, uri.port, use_ssl: true) do |http|
-        http.request(request_for(uri))
-      end
+      response = get_json(uri, default_payload: {})
 
       Response.new(
-        status: http_response.code.to_i,
-        payload: payload_from(http_response),
-        rate_limit_remaining: integer_header(http_response, "X-RateLimit-Remaining"),
-        rate_limit_resets_at: rate_limit_resets_at_from(http_response)
+        status: response.status,
+        payload: response.payload,
+        rate_limit_remaining: response.rate_limit_remaining,
+        rate_limit_resets_at: response.rate_limit_resets_at
       )
-    end
-
-    private
-
-    def request_for(uri)
-      request = Net::HTTP::Get.new(uri)
-      request["User-Agent"] = "strong-mind-challenge"
-      request
-    end
-
-    def payload_from(http_response)
-      return {} unless http_response.is_a?(Net::HTTPSuccess)
-
-      JSON.parse(http_response.body)
-    rescue JSON::ParserError
-      {}
-    end
-
-    def integer_header(http_response, header)
-      value = http_response[header]
-      value.to_i if value.present?
-    end
-
-    def rate_limit_resets_at_from(http_response)
-      reset_epoch = integer_header(http_response, "X-RateLimit-Reset")
-      Time.zone.at(reset_epoch) if reset_epoch.present?
     end
   end
 end
