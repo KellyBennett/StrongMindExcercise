@@ -6,13 +6,15 @@ metadata in background jobs.
 
 ## Requirements
 
-- Ruby 3.4.9
-- PostgreSQL
-- Docker and Docker Compose, recommended for local review
+- Docker and Docker Compose
+
+Ruby 3.4.9, PostgreSQL, and the application dependencies are provided by the
+Docker image and compose services. Reviewers do not need Ruby or PostgreSQL
+installed on their host machine.
 
 The project was built in a VS Code dev container, but the root
-`docker-compose.yml` is the easiest way to run it without depending on that
-editor setup.
+`docker-compose.yml` is the recommended way to run it for review without
+depending on that editor setup.
 
 ## Running Locally
 
@@ -24,7 +26,7 @@ docker compose up --build web
 
 Then open:
 
-- `http://localhost:3000/admin` for Administrate dashboards
+- `http://localhost:3000/admin` for an Admin dashboard
 - `http://localhost:3000/admin/github_push_events` for stored push events
 - `http://localhost:3000/jobs` for Mission Control Jobs
 - `http://localhost:3000/up` for the Rails health check
@@ -44,6 +46,20 @@ docker compose run --rm test
 The compose services use `mise exec -- ...` because the dev container image
 installs the Ruby toolchain through mise. `mise exec` runs the command with the
 Ruby version and related tools selected by the project.
+
+## Optional Dev Container
+
+For day-to-day development, open the repository in VS Code and choose
+`Dev Containers: Reopen in Container`.
+
+The dev container keeps local requirements minimal while providing the app
+runtime and developer tooling:
+
+- Ruby, Rails dependencies, PostgreSQL, Selenium, and Postgres client tools
+- GitHub CLI and Docker access from inside the container
+- forwarded ports for Rails (`3000`) and PostgreSQL (`5432`)
+- Ruby LSP with RuboCop formatting on save
+- automatic setup via `bin/setup --skip-server`
 
 ## What The App Stores
 
@@ -138,16 +154,27 @@ enrichment backoff and stricter queue concurrency.
 
 ## Object Storage
 
-This app does not currently use object storage.
+This app uses Active Storage to store a JSON object copy of each newly imported
+raw GitHub event payload.
 
-Raw GitHub events are stored in PostgreSQL `jsonb`, and actor avatar URLs are
-stored as durable references to GitHub-hosted images. Avatars are not downloaded,
-so the app avoids repeated avatar downloads by design.
+In local development and tests, Active Storage uses the Rails disk service. In a
+production deployment, the same attachment code can point at S3, GCS, or another
+Active Storage service by changing `config/storage.yml` and the environment's
+`config.active_storage.service`.
 
-If object storage were required, the smallest production-like extension would be
-to add Active Storage for raw event payload archives or cached avatar blobs,
-store the blob references on the related records, and add a cleanup policy for
-temporary or expired blobs.
+Each `GithubPushEvent` has one `raw_event_payload` attachment. The database
+still stores structured query columns and the `jsonb` payload for analysis, but
+the Active Storage attachment gives the raw event a durable object reference.
+
+Object writes are bounded to new events:
+
+- duplicate GitHub events are skipped before object storage is touched
+- existing raw-event attachments are not written again
+- `PurgeOldGithubRawEventPayloadsJob` can remove raw-event objects older than a
+  retention window while leaving the database record and queryable fields intact
+
+Avatars are not downloaded. The app stores GitHub avatar URLs and renders those
+durable references directly, which avoids unnecessary avatar re-downloads.
 
 ## Logging And Operations
 

@@ -1,4 +1,6 @@
 class GithubPushEvent < ApplicationRecord
+  has_one_attached :raw_event_payload
+
   belongs_to :enriched_actor, class_name: "GithubActor", foreign_key: :github_actor_id, optional: true
   belongs_to :enriched_repository,
     class_name: "GithubRepository",

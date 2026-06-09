@@ -2,6 +2,10 @@ module Github
   class PushEventImporter
     Result = Data.define(:imported_count, :skipped_count)
 
+    def initialize(raw_event_archiver: RawEventArchiver.new)
+      @raw_event_archiver = raw_event_archiver
+    end
+
     def import(events)
       imported_count = 0
       skipped_count = 0
@@ -15,6 +19,7 @@ module Github
         end
 
         push_event = GithubPushEvent.create!(attributes)
+        raw_event_archiver.archive(push_event)
         EnrichGithubPushEventJob.perform_later(push_event)
         imported_count += 1
       rescue ActiveRecord::RecordInvalid, ActiveRecord::RecordNotUnique
@@ -25,6 +30,8 @@ module Github
     end
 
     private
+
+    attr_reader :raw_event_archiver
 
     def attributes_from(event)
       return unless event["type"] == "PushEvent"

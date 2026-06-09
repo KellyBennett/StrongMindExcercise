@@ -1,7 +1,9 @@
 require "rails_helper"
 
 RSpec.describe Github::PushEventImporter do
-  subject(:importer) { described_class.new }
+  subject(:importer) { described_class.new(raw_event_archiver:) }
+
+  let(:raw_event_archiver) { instance_double(Github::RawEventArchiver, archive: nil) }
 
   before do
     allow(EnrichGithubPushEventJob).to receive(:perform_later)
@@ -21,6 +23,7 @@ RSpec.describe Github::PushEventImporter do
     expect(event.head).to eq("HEAD_SHA")
     expect(event.before).to eq("BEFORE_SHA")
     expect(event.raw_payload).to eq(push_event)
+    expect(raw_event_archiver).to have_received(:archive).with(event)
     expect(EnrichGithubPushEventJob).to have_received(:perform_later).with(event)
   end
 
@@ -30,6 +33,7 @@ RSpec.describe Github::PushEventImporter do
     expect(result.imported_count).to eq(0)
     expect(result.skipped_count).to eq(1)
     expect(GithubPushEvent.count).to eq(0)
+    expect(raw_event_archiver).not_to have_received(:archive)
     expect(EnrichGithubPushEventJob).not_to have_received(:perform_later)
   end
 
@@ -41,6 +45,7 @@ RSpec.describe Github::PushEventImporter do
     expect(result.imported_count).to eq(0)
     expect(result.skipped_count).to eq(1)
     expect(GithubPushEvent.count).to eq(1)
+    expect(raw_event_archiver).not_to have_received(:archive)
     expect(EnrichGithubPushEventJob).not_to have_received(:perform_later)
   end
 
@@ -52,6 +57,7 @@ RSpec.describe Github::PushEventImporter do
     expect(result.imported_count).to eq(0)
     expect(result.skipped_count).to eq(1)
     expect(GithubPushEvent.count).to eq(1)
+    expect(raw_event_archiver).not_to have_received(:archive)
     expect(EnrichGithubPushEventJob).not_to have_received(:perform_later)
   end
 
@@ -63,6 +69,7 @@ RSpec.describe Github::PushEventImporter do
     expect(result.imported_count).to eq(0)
     expect(result.skipped_count).to eq(1)
     expect(GithubPushEvent.count).to eq(0)
+    expect(raw_event_archiver).not_to have_received(:archive)
   end
 
   def push_event
