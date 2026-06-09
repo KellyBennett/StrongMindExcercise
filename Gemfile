@@ -31,6 +31,8 @@ gem "solid_cable"
 # A gem that adds a frontend to Active Jobs
 gem "mission_control-jobs"
 
+gem "administrate"
+
 # Reduces boot times through caching; required in config/boot.rb
 gem "bootsnap", require: false
 
