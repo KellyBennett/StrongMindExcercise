@@ -27,7 +27,7 @@ Then open:
 
 - `http://localhost:3000/admin` for an Admin dashboard
 - `http://localhost:3000/admin/github_push_events` for stored push events
-- `http://localhost:3000/jobs` for Mission Control Jobs
+- `http://localhost:3000/jobs` for Mission Control Jobs (username: `dev`, password: `secret`)
 - `http://localhost:3000/up` for the Rails health check
 
 Run one cursor-aware ingestion pass manually:
@@ -35,6 +35,8 @@ Run one cursor-aware ingestion pass manually:
 ```bash
 docker compose run --rm ingest
 ```
+
+Note that the app is configured to do automatic ingestion every 1 minute, so you're very likely to hit a rate-limit if you run the ingest manually like this. This is expected.
 
 Run the test suite:
 
@@ -50,15 +52,15 @@ Start the web app and database:
 docker compose up --build web
 ```
 
-In another terminal, run one cursor-aware ingestion pass:
+After the container is built and dependencies are installed, you'll start seeing application logs right away. The app is configured to automatically begin ingesting, and will continue to ingest at a frequency defined in `config/recurring.yml`.
+
+In another terminal, you can choose to run one cursor-aware ingestion pass:
 
 ```bash
 docker compose run --rm ingest
 ```
 
-After the container is created and the dependencies are installed, the
-ingestion command should finish within a minute in a normal network
-environment. The command respects the stored GitHub polling cursor, so it may
+The command respects the stored GitHub polling cursor, so it may
 log that ingestion was skipped when GitHub has asked the app to wait or when the
 unauthenticated API rate limit is still resetting. If GitHub polling is
 available and returns new public `PushEvent` records, database rows should
@@ -68,14 +70,12 @@ runs in the background queue.
 
 ### Verifying via UI
 
+This is the recommended way to see everything working. I've provided two UIs for you to easily see what's been created, and you can poke around to see the various pieces in action.
+
 Open
 
-- `http://localhost:3000/admin/github_push_events` for stored `PushEvent`
-  records
-- `http://localhost:3000/admin/github_actors` for enriched actor records
-- `http://localhost:3000/admin/github_repositories` for enriched repository
-  records
-- `http://localhost:3000/jobs` for queued or failed background jobs
+- `http://localhost:3000/admin` shows created records stored in Postgres. After the app has been running for a minute, you should start to see records populating here. You'll also see enriched post data in these views after the EnrichPosts jobs have run in the background.
+- `http://localhost:3000/jobs` for queued, finished, or failed background jobs
 
 ### Verifying via Logs
 
@@ -96,7 +96,7 @@ Expected enrichment logs include:
 - `Starting GitHub PushEvent enrichment for ...`
 - `Finished GitHub PushEvent enrichment for ...`
 
-### Verifying Records From The Database
+### Verifying Records From The Rails Console
 
 With the web service running in another terminal, open a Rails console:
 
