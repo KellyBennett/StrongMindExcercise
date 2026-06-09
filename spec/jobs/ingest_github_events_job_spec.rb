@@ -9,6 +9,7 @@ RSpec.describe IngestGithubEventsJob, type: :job do
     allow(Github::EventsClient).to receive(:new).and_return(client)
     allow(Github::IngestionLogger).to receive(:new).and_return(ingestion_logger)
     allow(Github::PushEventImporter).to receive(:new).and_return(push_event_importer)
+    allow(ingestion_logger).to receive(:ingestion_started)
   end
 
   it "skips polling while the cursor is waiting for the next poll window" do
@@ -39,6 +40,7 @@ RSpec.describe IngestGithubEventsJob, type: :job do
     import_result = Github::PushEventImporter::Result.new(imported_count: 1, skipped_count: 0)
 
     expect(client).to receive(:fetch_events).with(etag: nil).and_return(response)
+    expect(ingestion_logger).to receive(:ingestion_started)
     expect(ingestion_logger).to receive(:response_received).with(response)
     expect(push_event_importer).to receive(:import).with(events).and_return(import_result)
     expect(ingestion_logger).to receive(:push_events_imported).with(import_result)

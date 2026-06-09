@@ -1,4 +1,5 @@
 require "rails_helper"
+require "net/http"
 
 RSpec.describe Github::IngestionLogger do
   subject(:ingestion_logger) { described_class.new }
@@ -7,6 +8,14 @@ RSpec.describe Github::IngestionLogger do
 
   before do
     allow(Rails).to receive(:logger).and_return(rails_logger)
+  end
+
+  it "logs ingestion starts" do
+    cursor = build(:github_ingestion_cursor, etag: "previous-etag")
+
+    expect(rails_logger).to receive(:info).with("Starting GitHub events ingestion; etag present")
+
+    ingestion_logger.ingestion_started(cursor)
   end
 
   it "logs when polling is paused until GitHub's requested poll window" do
@@ -63,6 +72,26 @@ RSpec.describe Github::IngestionLogger do
     expect(rails_logger).to receive(:info).with("Imported 2 GitHub PushEvent records; skipped 3")
 
     ingestion_logger.push_events_imported(result)
+  end
+
+  it "logs ingestion failures" do
+    error = Net::OpenTimeout.new("execution expired")
+
+    expect(rails_logger).to receive(:error).with(
+      "GitHub events ingestion failed: Net::OpenTimeout - execution expired"
+    )
+
+    ingestion_logger.ingestion_failed(error)
+  end
+
+  it "logs exhausted ingestion retries" do
+    error = SocketError.new("getaddrinfo failed")
+
+    expect(rails_logger).to receive(:error).with(
+      "GitHub events ingestion retries exhausted: SocketError - getaddrinfo failed"
+    )
+
+    ingestion_logger.retries_exhausted(error)
   end
 
   def github_events_response(

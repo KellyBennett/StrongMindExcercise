@@ -1,5 +1,11 @@
+require "net/http"
+
 class IngestGithubEventsJob < ApplicationJob
   queue_as :default
+
+  retry_on Net::OpenTimeout, Net::ReadTimeout, SocketError, wait: 1.minute, attempts: 3 do |_job, error|
+    Github::IngestionLogger.new.retries_exhausted(error)
+  end
 
   def perform
     cursor = GithubIngestionCursor.public_events
@@ -10,11 +16,15 @@ class IngestGithubEventsJob < ApplicationJob
       return
     end
 
+    ingestion_logger.ingestion_started(cursor)
     response = events_client.fetch_events(etag: cursor.etag)
 
     update_cursor_from(response, cursor)
     ingestion_logger.response_received(response)
     import_push_events(response) if response.success?
+  rescue Net::OpenTimeout, Net::ReadTimeout, SocketError => error
+    ingestion_logger.ingestion_failed(error)
+    raise
   end
 
   private
