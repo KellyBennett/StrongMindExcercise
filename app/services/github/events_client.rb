@@ -3,7 +3,7 @@ require "net/http"
 
 module Github
   class EventsClient
-    EVENTS_URI = URI("https://api.github.com/events")
+    DEFAULT_REPOSITORY = "rails/rails"
     DEFAULT_POLL_INTERVAL = 60
 
     Response = Data.define(
@@ -28,8 +28,10 @@ module Github
     end
 
     def fetch_events(etag:)
-      http_response = Net::HTTP.start(EVENTS_URI.host, EVENTS_URI.port, use_ssl: true) do |http|
-        http.request(request_for(etag))
+      uri = events_uri
+
+      http_response = Net::HTTP.start(uri.host, uri.port, use_ssl: true) do |http|
+        http.request(request_for(uri, etag))
       end
 
       Response.new(
@@ -44,8 +46,25 @@ module Github
 
     private
 
-    def request_for(etag)
-      request = Net::HTTP::Get.new(EVENTS_URI)
+    def events_uri
+      owner, name = configured_repository.split("/")
+
+      URI("https://api.github.com/repos/#{escape_path(owner)}/#{escape_path(name)}/events")
+    end
+
+    def configured_repository
+      repository = ENV.fetch("GITHUB_REPOSITORY", DEFAULT_REPOSITORY).strip
+      return repository if repository.match?(%r{\A[\w.-]+/[\w.-]+\z})
+
+      raise ArgumentError, "GITHUB_REPOSITORY must be formatted as owner/name"
+    end
+
+    def escape_path(value)
+      URI.encode_www_form_component(value)
+    end
+
+    def request_for(uri, etag)
+      request = Net::HTTP::Get.new(uri)
       request["User-Agent"] = "strong-mind-challenge"
       request["If-None-Match"] = etag if etag.present?
       request
