@@ -21,5 +21,11 @@ module Github
         Rails.logger.warn("GitHub events ingestion received unexpected status #{response.status}")
       end
     end
+
+    def push_events_imported(result)
+      Rails.logger.info(
+        "Imported #{result.imported_count} GitHub PushEvent records; skipped #{result.skipped_count}"
+      )
+    end
   end
 end

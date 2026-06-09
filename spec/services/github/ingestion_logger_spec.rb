@@ -55,6 +55,14 @@ RSpec.describe Github::IngestionLogger do
     ingestion_logger.response_received(github_events_response(status: 500))
   end
 
+  it "logs imported push event counts" do
+    result = Github::PushEventImporter::Result.new(imported_count: 2, skipped_count: 3)
+
+    expect(rails_logger).to receive(:info).with("Imported 2 GitHub PushEvent records; skipped 3")
+
+    ingestion_logger.push_events_imported(result)
+  end
+
   def github_events_response(
     status: 200,
     events: [],

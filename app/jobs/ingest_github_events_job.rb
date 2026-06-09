@@ -14,6 +14,7 @@ class IngestGithubEventsJob < ApplicationJob
 
     update_cursor_from(response, cursor)
     ingestion_logger.response_received(response)
+    import_push_events(response) if response.success?
   end
 
   private
@@ -24,6 +25,16 @@ class IngestGithubEventsJob < ApplicationJob
 
   def ingestion_logger
     Github::IngestionLogger.new
+  end
+
+  def push_event_importer
+    Github::PushEventImporter.new
+  end
+
+  def import_push_events(response)
+    result = push_event_importer.import(response.events)
+
+    ingestion_logger.push_events_imported(result)
   end
 
   def update_cursor_from(response, cursor)
