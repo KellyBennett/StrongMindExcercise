@@ -10,9 +10,21 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_09_002000) do
+ActiveRecord::Schema[8.1].define(version: 2026_06_09_003000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
+
+  create_table "github_actors", force: :cascade do |t|
+    t.string "avatar_url"
+    t.datetime "created_at", null: false
+    t.bigint "github_id", null: false
+    t.string "html_url"
+    t.string "login", null: false
+    t.jsonb "raw_payload", default: {}, null: false
+    t.datetime "updated_at", null: false
+    t.index ["github_id"], name: "index_github_actors_on_github_id", unique: true
+    t.index ["login"], name: "index_github_actors_on_login"
+  end
 
   create_table "github_ingestion_cursors", force: :cascade do |t|
     t.datetime "created_at", null: false
@@ -30,17 +42,36 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_09_002000) do
     t.string "actor_login"
     t.string "before", null: false
     t.datetime "created_at", null: false
+    t.bigint "github_actor_id"
     t.string "github_event_id", null: false
     t.bigint "github_repository_id", null: false
+    t.bigint "github_repository_record_id"
     t.string "head", null: false
     t.bigint "push_identifier", null: false
     t.jsonb "raw_payload", default: {}, null: false
     t.string "ref", null: false
     t.string "repository_name", null: false
     t.datetime "updated_at", null: false
+    t.index ["github_actor_id"], name: "index_github_push_events_on_github_actor_id"
     t.index ["github_event_id"], name: "index_github_push_events_on_github_event_id", unique: true
     t.index ["github_repository_id"], name: "index_github_push_events_on_github_repository_id"
+    t.index ["github_repository_record_id"], name: "index_github_push_events_on_github_repository_record_id"
     t.index ["push_identifier"], name: "index_github_push_events_on_push_identifier", unique: true
+  end
+
+  create_table "github_repositories", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.text "description"
+    t.string "full_name"
+    t.bigint "github_id", null: false
+    t.string "html_url"
+    t.string "name", null: false
+    t.string "owner_login"
+    t.jsonb "raw_payload", default: {}, null: false
+    t.datetime "updated_at", null: false
+    t.index ["full_name"], name: "index_github_repositories_on_full_name"
+    t.index ["github_id"], name: "index_github_repositories_on_github_id", unique: true
+    t.index ["owner_login"], name: "index_github_repositories_on_owner_login"
   end
 
   create_table "solid_queue_blocked_executions", force: :cascade do |t|
@@ -164,6 +195,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_09_002000) do
     t.index ["key"], name: "index_solid_queue_semaphores_on_key", unique: true
   end
 
+  add_foreign_key "github_push_events", "github_actors"
+  add_foreign_key "github_push_events", "github_repositories", column: "github_repository_record_id"
   add_foreign_key "solid_queue_blocked_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade
   add_foreign_key "solid_queue_claimed_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade
   add_foreign_key "solid_queue_failed_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade

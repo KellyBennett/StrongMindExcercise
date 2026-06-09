@@ -19,6 +19,8 @@ class GithubPushEventDashboard < Administrate::BaseDashboard
     raw_payload: Field::String.with_options(searchable: false),
     ref: Field::String,
     repository_name: Field::String,
+    enriched_actor: Field::BelongsTo,
+    enriched_repository: Field::BelongsTo,
     created_at: Field::DateTime,
     updated_at: Field::DateTime,
   }.freeze
@@ -49,6 +51,8 @@ class GithubPushEventDashboard < Administrate::BaseDashboard
     raw_payload
     ref
     repository_name
+    enriched_actor
+    enriched_repository
     created_at
     updated_at
   ].freeze

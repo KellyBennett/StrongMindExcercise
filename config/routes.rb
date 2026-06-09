@@ -1,10 +1,12 @@
 Rails.application.routes.draw do
   namespace :admin do
-      resources :github_ingestion_cursors
-      resources :github_push_events
+    resources :github_actors
+    resources :github_ingestion_cursors
+    resources :github_push_events
+    resources :github_repositories
 
-      root to: "github_ingestion_cursors#index"
-    end
+    root to: "github_ingestion_cursors#index"
+  end
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.

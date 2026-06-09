@@ -14,7 +14,8 @@ module Github
           next
         end
 
-        GithubPushEvent.create!(attributes)
+        push_event = GithubPushEvent.create!(attributes)
+        EnrichGithubPushEventJob.perform_later(push_event)
         imported_count += 1
       rescue ActiveRecord::RecordInvalid, ActiveRecord::RecordNotUnique
         skipped_count += 1

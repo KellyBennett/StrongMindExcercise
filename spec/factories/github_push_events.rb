@@ -15,11 +15,13 @@ FactoryBot.define do
         "type" => "PushEvent",
         "repo" => {
           "id" => github_repository_id,
-          "name" => repository_name
+          "name" => repository_name,
+          "url" => "https://api.github.com/repos/#{repository_name}"
         },
         "actor" => {
           "id" => actor_id,
-          "login" => actor_login
+          "login" => actor_login,
+          "url" => "https://api.github.com/users/#{actor_login}"
         },
         "payload" => {
           "push_id" => push_identifier,

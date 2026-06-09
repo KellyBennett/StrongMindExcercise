@@ -3,6 +3,10 @@ require "rails_helper"
 RSpec.describe Github::PushEventImporter do
   subject(:importer) { described_class.new }
 
+  before do
+    allow(EnrichGithubPushEventJob).to receive(:perform_later)
+  end
+
   it "persists raw and structured data for push events" do
     result = importer.import([ push_event ])
 
@@ -17,6 +21,7 @@ RSpec.describe Github::PushEventImporter do
     expect(event.head).to eq("HEAD_SHA")
     expect(event.before).to eq("BEFORE_SHA")
     expect(event.raw_payload).to eq(push_event)
+    expect(EnrichGithubPushEventJob).to have_received(:perform_later).with(event)
   end
 
   it "ignores non-push events" do
@@ -25,6 +30,7 @@ RSpec.describe Github::PushEventImporter do
     expect(result.imported_count).to eq(0)
     expect(result.skipped_count).to eq(1)
     expect(GithubPushEvent.count).to eq(0)
+    expect(EnrichGithubPushEventJob).not_to have_received(:perform_later)
   end
 
   it "does not duplicate an existing GitHub event" do
@@ -35,6 +41,7 @@ RSpec.describe Github::PushEventImporter do
     expect(result.imported_count).to eq(0)
     expect(result.skipped_count).to eq(1)
     expect(GithubPushEvent.count).to eq(1)
+    expect(EnrichGithubPushEventJob).not_to have_received(:perform_later)
   end
 
   it "does not duplicate an existing push identifier" do
@@ -45,6 +52,7 @@ RSpec.describe Github::PushEventImporter do
     expect(result.imported_count).to eq(0)
     expect(result.skipped_count).to eq(1)
     expect(GithubPushEvent.count).to eq(1)
+    expect(EnrichGithubPushEventJob).not_to have_received(:perform_later)
   end
 
   it "skips malformed push events without raising" do
@@ -63,11 +71,13 @@ RSpec.describe Github::PushEventImporter do
       "type" => "PushEvent",
       "repo" => {
         "id" => 12_345,
-        "name" => "rails/rails"
+        "name" => "rails/rails",
+        "url" => "https://api.github.com/repos/rails/rails"
       },
       "actor" => {
         "id" => 456,
-        "login" => "contributor"
+        "login" => "contributor",
+        "url" => "https://api.github.com/users/contributor"
       },
       "payload" => {
         "push_id" => 67_890,
