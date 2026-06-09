@@ -4,6 +4,10 @@ Rails application that polls the public GitHub Events API, persists `PushEvent`
 records for analysis, and enriches those events with GitHub actor and repository
 metadata in background jobs.
 
+## Design
+
+The design of this app, at a high-level, is described in the `DESIGN_BREIF.md` file at the root of this repo. Please see that for more detail on design choices and architecture notes.
+
 ## Requirements
 
 - Docker and Docker Compose
