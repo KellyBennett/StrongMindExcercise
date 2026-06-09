@@ -22,7 +22,7 @@ class GithubPushEventDashboard < Administrate::BaseDashboard
     enriched_actor: Field::BelongsTo,
     enriched_repository: Field::BelongsTo,
     created_at: Field::DateTime,
-    updated_at: Field::DateTime,
+    updated_at: Field::DateTime
   }.freeze
 
   # COLLECTION_ATTRIBUTES

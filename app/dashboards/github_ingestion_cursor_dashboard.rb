@@ -15,7 +15,7 @@ class GithubIngestionCursorDashboard < Administrate::BaseDashboard
     rate_limit_remaining: Field::Number,
     rate_limit_resets_at: Field::DateTime,
     created_at: Field::DateTime,
-    updated_at: Field::DateTime,
+    updated_at: Field::DateTime
   }.freeze
 
   # COLLECTION_ATTRIBUTES
