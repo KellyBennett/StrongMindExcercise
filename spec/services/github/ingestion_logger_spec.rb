@@ -42,7 +42,7 @@ RSpec.describe Github::IngestionLogger do
   end
 
   it "logs successful fetches" do
-    events = [{ "id" => "1" }, { "id" => "2" }]
+    events = [ { "id" => "1" }, { "id" => "2" } ]
 
     expect(rails_logger).to receive(:info).with("Fetched 2 GitHub events")
 

@@ -23,7 +23,7 @@ module Github
       end
 
       def rate_limited?
-        status.in?([403, 429]) && rate_limit_remaining.to_i <= 0
+        status.in?([ 403, 429 ]) && rate_limit_remaining.to_i <= 0
       end
     end
 
