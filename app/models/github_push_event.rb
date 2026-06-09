@@ -13,4 +13,70 @@ class GithubPushEvent < ApplicationRecord
   validates :head, presence: true
   validates :before, presence: true
   validates :raw_payload, presence: true
+
+  def event_summary
+    self
+  end
+
+  def display_actor_login
+    enriched_actor&.login.presence || actor_login.presence || "unknown"
+  end
+
+  def actor_avatar_url
+    enriched_actor&.avatar_url.presence || raw_payload.dig("actor", "avatar_url")
+  end
+
+  def actor_html_url
+    enriched_actor&.html_url.presence || github_url_for(display_actor_login)
+  end
+
+  def repository_html_url
+    enriched_repository&.html_url.presence || github_url_for(repository_name)
+  end
+
+  def branch_name
+    ref.delete_prefix("refs/heads/")
+  end
+
+  def ref_label
+    branch_ref? ? branch_name : ref
+  end
+
+  def ref_html_url
+    return unless branch_ref? && repository_html_url.present?
+
+    "#{repository_html_url}/tree/#{branch_name}"
+  end
+
+  def commit_html_url
+    return if repository_html_url.blank?
+
+    "#{repository_html_url}/commit/#{head}"
+  end
+
+  def push_html_url
+    return if repository_html_url.blank?
+
+    "#{repository_html_url}/compare/#{before}...#{head}"
+  end
+
+  def short_head
+    head.first(7)
+  end
+
+  def enriched?
+    enriched_actor.present? || enriched_repository.present?
+  end
+
+  private
+
+  def branch_ref?
+    ref.start_with?("refs/heads/")
+  end
+
+  def github_url_for(path)
+    return if path.blank? || path == "unknown"
+
+    "https://github.com/#{path}"
+  end
 end

@@ -9,6 +9,7 @@ class GithubPushEventDashboard < Administrate::BaseDashboard
   # on pages throughout the dashboard.
   ATTRIBUTE_TYPES = {
     id: Field::Number,
+    event_summary: GithubPushEventSummaryField,
     actor_id: Field::Number,
     actor_login: Field::String,
     before: Field::String,
@@ -31,15 +32,16 @@ class GithubPushEventDashboard < Administrate::BaseDashboard
   # By default, it's limited to four items to reduce clutter on index pages.
   # Feel free to add, remove, or rearrange items.
   COLLECTION_ATTRIBUTES = %i[
-    id
-    actor_id
-    actor_login
-    before
+    event_summary
+    github_event_id
+    push_identifier
+    created_at
   ].freeze
 
   # SHOW_PAGE_ATTRIBUTES
   # an array of attributes that will be displayed on the model's show page.
   SHOW_PAGE_ATTRIBUTES = %i[
+    event_summary
     id
     actor_id
     actor_login
