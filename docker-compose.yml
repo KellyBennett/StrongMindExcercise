@@ -1,0 +1,57 @@
+x-app-env: &app-env
+  DB_HOST: postgres
+  JOB_CONCURRENCY: ${JOB_CONCURRENCY:-1}
+
+x-app: &app
+  build:
+    context: .
+    dockerfile: .devcontainer/Dockerfile
+  environment:
+    <<: *app-env
+  depends_on:
+    postgres:
+      condition: service_healthy
+  volumes:
+    - .:/rails:cached
+    - bundle-data:/usr/local/bundle
+  working_dir: /rails
+
+services:
+  web:
+    <<: *app
+    command: bash -lc "mise exec -- bundle install && mise exec -- bin/rails db:prepare && mise exec -- bin/rails server -b 0.0.0.0"
+    ports:
+      - "3000:3000"
+
+  ingest:
+    <<: *app
+    profiles:
+      - tools
+    command: bash -lc "mise exec -- bundle install && mise exec -- bin/rails db:prepare && mise exec -- bin/rails runner 'IngestGithubEventsJob.perform_now'"
+
+  test:
+    <<: *app
+    profiles:
+      - tools
+    environment:
+      <<: *app-env
+      RAILS_ENV: test
+    command: bash -lc "mise exec -- bundle install && mise exec -- bin/rails db:prepare && mise exec -- rspec"
+
+  postgres:
+    image: postgres:16.1
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  bundle-data:
+  postgres-data:
