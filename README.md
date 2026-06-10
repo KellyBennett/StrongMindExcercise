@@ -58,7 +58,7 @@ docker compose up --build web
 
 After the container is built and dependencies are installed, you'll start seeing application logs right away. The app is configured to automatically begin ingesting, and will continue to ingest at a frequency defined in `config/recurring.yml`.
 
-In another terminal, you can choose to run one cursor-aware ingestion pass:
+(OPTIONAL) In another terminal, you can choose to run one cursor-aware ingestion pass:
 
 ```bash
 docker compose run --rm ingest
