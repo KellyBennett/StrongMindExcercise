@@ -31,7 +31,7 @@ Then open:
 
 - `http://localhost:3000/admin` for an Admin dashboard
 - `http://localhost:3000/admin/github_push_events` for stored push events
-- `http://localhost:3000/jobs` for Mission Control Jobs (username: `dev`, password: `secret`)
+- `http://localhost:3000/jobs` for Mission Control Jobs
 - `http://localhost:3000/up` for the Rails health check
 
 Run one cursor-aware ingestion pass manually:
