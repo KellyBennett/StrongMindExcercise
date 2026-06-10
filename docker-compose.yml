@@ -21,7 +21,7 @@ x-app: &app
 services:
   web:
     <<: *app
-    command: bash -lc "mise exec -- bundle install && mise exec -- bin/rails db:prepare && mise exec -- bin/rails server -b 0.0.0.0"
+    command: bash -lc "chmod +x bin/rails bin/thrust && mise exec -- bundle install && mise exec -- bin/rails db:prepare && mise exec -- bin/rails server -b 0.0.0.0"
     ports:
       - "3000:3000"
 
